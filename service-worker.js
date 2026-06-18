@@ -1,7 +1,7 @@
 const CACHE = 'n2112n-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
+  '/N2112N-App/',
+  '/N2112N-App/index.html',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css',
 ];
 
@@ -30,7 +30,6 @@ self.addEventListener('fetch', function(e) {
   e.respondWith(
     caches.match(e.request).then(function(cached) {
       return cached || fetch(e.request).then(function(response) {
-        // Cache CDN assets
         if (e.request.url.includes('cdn.jsdelivr.net')) {
           var clone = response.clone();
           caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
