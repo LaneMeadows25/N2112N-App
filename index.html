@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N2112N — W&B + TOLD Calculator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeece8;
+  --text:#1a1a18;--text2:#6b6b67;--text3:#9b9b97;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --success-bg:#eaf3de;--success-text:#3b6d11;--success-border:rgba(59,109,17,0.3);
+  --warn-bg:#faeeda;--warn-text:#854f0b;--warn-border:rgba(133,79,11,0.3);
+  --danger-bg:#fcebeb;--danger-text:#a32d2d;--danger-border:rgba(163,45,45,0.3);
+  --info-bg:#e6f1fb;--info-text:#185fa5;--info-border:rgba(24,95,165,0.3);
+  --radius:8px;--radius-lg:12px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'Menlo','Consolas',monospace;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
+    --text:#e8e8e4;--text2:#9a9a96;--text3:#606060;
+    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+    --success-bg:#173404;--success-text:#97c459;--success-border:rgba(99,153,34,0.35);
+    --warn-bg:#412402;--warn-text:#ef9f27;--warn-border:rgba(186,117,23,0.35);
+    --danger-bg:#501313;--danger-text:#f09595;--danger-border:rgba(226,75,74,0.35);
+    --info-bg:#042c53;--info-text:#85b7eb;--info-border:rgba(55,138,221,0.35);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh}
+
+/* ── MODAL OVERLAY ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+#modal{background:var(--bg);border-radius:var(--radius-lg);border:0.5px solid var(--border2);padding:28px 28px 24px;width:100%;max-width:480px}
+#modal h2{font-size:17px;font-weight:600;margin-bottom:4px}
+#modal .sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.modal-airport-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.modal-airport-row label{font-size:13px;color:var(--text2);width:160px;flex-shrink:0}
+.modal-airport-row input{flex:1;font-size:14px;padding:8px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);text-transform:uppercase;font-family:var(--font);letter-spacing:0.05em}
+.modal-airport-row input:focus{outline:none;border-color:#378add;box-shadow:0 0 0 2px rgba(55,138,221,0.2)}
+#modal-btn{width:100%;margin-top:16px;padding:11px;font-size:14px;font-weight:600;border-radius:var(--radius);border:none;background:#185fa5;color:#fff;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px}
+#modal-btn:hover{background:#378add}
+#modal-btn:disabled{opacity:0.6;cursor:not-allowed}
+#modal-status{margin-top:12px;font-size:12px;color:var(--text2);min-height:18px;text-align:center}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:11px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.topbar h1{font-size:16px;font-weight:600}
+.topbar .sub{font-size:12px;color:var(--text2)}
+.badge{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--bg2);color:var(--text2);border:0.5px solid var(--border);white-space:nowrap}
+.airport-badges{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.ap-badge{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--info-bg);color:var(--info-text);border:0.5px solid var(--info-border);cursor:pointer;display:flex;align-items:center;gap:4px}
+.ap-badge:hover{opacity:0.8}
+
+/* ── LAYOUT ── */
+.container{max-width:920px;margin:0 auto;padding:18px 16px}
+.tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg2);border-radius:var(--radius-lg);padding:4px;border:0.5px solid var(--border)}
+.tab{flex:1;padding:8px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text2);border-radius:var(--radius);font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s}
+.tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.1);font-weight:500}
+.tab:hover:not(.active){color:var(--text);background:rgba(0,0,0,0.04)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.card-title{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.card-title .refresh-btn{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:20px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:4px;font-family:var(--font)}
+.card-title .refresh-btn:hover{color:var(--text);background:var(--bg3)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.row label{font-size:13px;color:var(--text2);flex:1}
+.row input[type=number],.row input[type=text]{width:85px;font-size:13px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);text-align:right;font-family:var(--font)}
+.row input:focus{outline:none;border-color:#378add;box-shadow:0 0 0 2px rgba(55,138,221,0.2)}
+.row input[type=range]{flex:1.2;accent-color:#1d9e75}
+.row .unit{font-size:12px;color:var(--text3);width:32px}
+.autofilled{border-color:#1d9e75 !important;background:var(--success-bg) !important}
+.fixed{font-size:13px;font-weight:600;color:var(--text)}
+.results{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.metric{background:var(--bg2);border-radius:var(--radius);padding:12px;text-align:center;border:0.5px solid var(--border)}
+.metric .ml{font-size:11px;color:var(--text2);margin-bottom:3px}
+.metric .mv{font-size:20px;font-weight:600;color:var(--text)}
+.metric .ms{font-size:11px;color:var(--text3);margin-top:2px}
+.sbar{border-radius:var(--radius);padding:10px 14px;font-size:13px;font-weight:500;margin:10px 0;display:flex;align-items:center;gap:8px}
+.ok{background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border)}
+.warn{background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border)}
+.danger{background:var(--danger-bg);color:var(--danger-text);border:0.5px solid var(--danger-border)}
+.divider{border:none;border-top:0.5px solid var(--border);margin:10px 0}
+.canvas-wrap{position:relative;margin-top:6px}
+.told-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.told-out{background:var(--bg2);border-radius:var(--radius);padding:10px 12px;border:0.5px solid var(--border)}
+.told-out .tl{font-size:11px;color:var(--text2);margin-bottom:2px}
+.told-out .tv{font-size:17px;font-weight:600;color:var(--text)}
+.told-out .ts{font-size:11px;color:var(--text3);margin-top:1px}
+.form-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.form-row label{font-size:13px;color:var(--text2);flex:1}
+.form-row input{width:95px;font-size:13px;padding:5px 8px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);text-align:right;font-family:var(--font)}
+.form-row input:focus{outline:none;border-color:#378add;box-shadow:0 0 0 2px rgba(55,138,221,0.2)}
+.form-row .unit{font-size:12px;color:var(--text3);width:44px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:5px 0;color:var(--text2);font-weight:500;border-bottom:0.5px solid var(--border2)}
+th:not(:first-child){text-align:right}
+td{padding:5px 0;color:var(--text);border-bottom:0.5px solid var(--border)}
+td:not(:first-child){text-align:right;color:var(--text2)}
+.tfoot td{font-weight:600;color:var(--text)!important;border-top:1px solid var(--border2);border-bottom:none}
+.perf-note{font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5;background:var(--bg2);border-radius:var(--radius);padding:8px 12px;border-left:3px solid var(--warn-border)}
+
+/* METAR display cards */
+.metar-airport-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.metar-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.metar-icao{font-size:20px;font-weight:700;color:var(--text)}
+.metar-name{font-size:13px;color:var(--text2)}
+.metar-time{font-size:11px;color:var(--text3);margin-left:auto}
+.metar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.metar-cell{background:var(--bg2);border-radius:var(--radius);padding:8px 10px;border:0.5px solid var(--border)}
+.metar-cell .mc-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.metar-cell .mc-val{font-size:15px;font-weight:600;color:var(--text)}
+.metar-cell .mc-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.metar-raw{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg2);border-radius:var(--radius);padding:8px 10px;word-break:break-all;line-height:1.6;border:0.5px solid var(--border)}
+.cross-check{margin-top:8px;padding:8px 10px;border-radius:var(--radius);font-size:12px;display:flex;align-items:flex-start;gap:6px;line-height:1.5}
+.cross-check.match{background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border)}
+.cross-check.mismatch{background:var(--warn-bg);color:var(--warn-text);border:0.5px solid var(--warn-border)}
+.cross-check.pending{background:var(--bg2);color:var(--text2);border:0.5px solid var(--border)}
+.source-chips{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.chip{font-size:10px;padding:2px 8px;border-radius:20px;border:0.5px solid var(--border);color:var(--text2);background:var(--bg2)}
+.chip.ok{background:var(--success-bg);color:var(--success-text);border-color:var(--success-border)}
+.chip.warn{background:var(--warn-bg);color:var(--warn-text);border-color:var(--warn-border)}
+.chip.err{background:var(--danger-bg);color:var(--danger-text);border-color:var(--danger-border)}
+
+@media(max-width:600px){
+  .grid2,.results,.told-grid{grid-template-columns:1fr}
+  .topbar h1{font-size:14px}
+  .tab{font-size:11px;padding:7px 3px}
+  #modal{padding:20px 16px}
+}
+</style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="N2112N">
+<meta name="theme-color" content="#185fa5">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+</head>
+<body>
+
+<!-- STARTUP MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>N2112N Pre-flight Setup</h2>
+    <div class="sub">Enter your airport identifiers. You will paste METAR strings on the next screen.</div>
+    <div class="modal-airport-row">
+      <label><i class="ti ti-plane-departure"></i> Departure</label>
+      <input type="text" id="m_dep" placeholder="e.g. KGTU" maxlength="4" autocomplete="off">
+    </div>
+    <div class="modal-airport-row">
+      <label><i class="ti ti-plane-arrival"></i> Destination</label>
+      <input type="text" id="m_dest" placeholder="e.g. KAUS" maxlength="4" autocomplete="off">
+    </div>
+    <div class="modal-airport-row">
+      <label><i class="ti ti-map-pin"></i> Alternate (optional)</label>
+      <input type="text" id="m_alt" placeholder="e.g. KSAT" maxlength="4" autocomplete="off">
+    </div>
+    <button id="modal-btn" onclick="startPreflight()">
+      <i class="ti ti-arrow-right"></i> Continue to METAR Entry
+    </button>
+    <div id="modal-status">Get METARs from ForeFlight, aviationweather.gov, or ATIS</div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <i class="ti ti-plane" style="font-size:20px;color:var(--text2)"></i>
+  <div>
+    <h1>N2112N — PA-28-181 Archer II</h1>
+    <div class="sub">Weight &amp; Balance · TOLD · METAR</div>
+  </div>
+  <div class="airport-badges" id="airport-badges"></div>
+  <span class="badge">Private Use Only</span>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('wb')"><i class="ti ti-scale"></i> Weight &amp; Balance</button>
+    <button class="tab" onclick="showTab('told')"><i class="ti ti-checklist"></i> TOLD Card</button>
+    <button class="tab" onclick="showTab('metar')"><i class="ti ti-cloud"></i> METAR / Weather</button>
+  </div>
+
+  <!-- ══ W&B PANEL ══ -->
+  <div id="panel-wb" class="panel active">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Occupants &amp; Baggage</div>
+        <div class="row"><label>Pilot (front left)</label><input type="number" id="pilot" value="180" min="0" max="500"><span class="unit">lbs</span></div>
+        <div class="row"><label>Front right seat</label><input type="number" id="copilot" value="0" min="0" max="500"><span class="unit">lbs</span></div>
+        <div class="row"><label>Rear left seat</label><input type="number" id="rear_l" value="0" min="0" max="500"><span class="unit">lbs</span></div>
+        <div class="row"><label>Rear right seat</label><input type="number" id="rear_r" value="0" min="0" max="500"><span class="unit">lbs</span></div>
+        <div class="row"><label>Baggage (max 200 lbs)</label><input type="number" id="bags" value="0" min="0" max="300"><span class="unit">lbs</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Fuel</div>
+        <div class="row"><label>Total fuel</label><input type="range" id="fuel_s" min="0" max="48" value="40" step="1"><span style="font-size:13px;font-weight:600;width:60px;text-align:right" id="fuel_disp">40 gal</span></div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px">48 gal usable · 6 lbs/gal · 100LL</div>
+        <div class="row"><label style="font-size:12px">Fuel weight</label><span class="fixed" id="fuel_lbs">240 lbs</span></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">17 gal = bottom of indicator tab</div>
+        <div class="divider"></div>
+        <div class="card-title">Aircraft empty (Jan 2026)</div>
+        <div class="row"><label>Empty weight</label><span class="fixed">1,555.93</span><span class="unit">lbs</span></div>
+        <div class="row"><label>Empty CG arm</label><span class="fixed">87.30"</span></div>
+        <div class="row"><label>Empty moment</label><span class="fixed">135,838</span><span class="unit" style="width:50px">in-lbs</span></div>
+      </div>
+    </div>
+    <div id="sbar" class="sbar ok"><i class="ti ti-check-circle" style="font-size:17px"></i><span id="stext">Within limits</span></div>
+    <div class="results">
+      <div class="metric"><div class="ml">Gross weight</div><div class="mv" id="r_gw">—</div><div class="ms">max 2,550 lbs</div></div>
+      <div class="metric"><div class="ml">CG location</div><div class="mv" id="r_cg">—</div><div class="ms">inches aft of datum</div></div>
+      <div class="metric"><div class="ml">Useful load used</div><div class="mv" id="r_ul">—</div><div class="ms">of 994.07 lbs available</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Moment breakdown</div>
+      <table><thead><tr><th>Item</th><th>Weight (lbs)</th><th>Arm (in)</th><th>Moment</th></tr></thead>
+      <tbody id="mtable"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-title">CG envelope — Normal category</div>
+      <div class="canvas-wrap"><canvas id="cgCanvas" style="width:100%;height:220px"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ══ TOLD PANEL ══ -->
+  <div id="panel-told" class="panel">
+    <div id="told-autofill-banner" style="display:none" class="sbar ok" style="margin-bottom:12px">
+      <i class="ti ti-wand" style="font-size:16px"></i>
+      <span id="told-autofill-text">Fields auto-filled from departure METAR</span>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Airport &amp; conditions
+          <button class="refresh-btn" onclick="refillTOLD()"><i class="ti ti-refresh"></i> Re-fill from METAR</button>
+        </div>
+        <div class="form-row"><label>Field elevation</label><input type="number" id="t_elev" value="790" min="0" max="14000"><span class="unit">ft MSL</span></div>
+        <div class="form-row"><label>Altimeter setting</label><input type="number" id="t_alt" value="29.92" step="0.01" min="27" max="31"><span class="unit">inHg</span></div>
+        <div class="form-row"><label>OAT (outside temp)</label><input type="number" id="t_oat" value="20" min="-40" max="55"><span class="unit">°C</span></div>
+        <div class="form-row"><label>Wind direction</label><input type="number" id="t_wdir" value="360" min="0" max="360"><span class="unit">°mag</span></div>
+        <div class="form-row"><label>Wind speed</label><input type="number" id="t_wspd" value="0" min="0" max="60"><span class="unit">kts</span></div>
+        <div class="form-row"><label>Runway heading</label><input type="number" id="t_rwhdg" value="360" min="0" max="360"><span class="unit">°mag</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">
+          PA = [(29.92 − alt) × 1000] + field elev<br>
+          DA = (OAT − ISA std) × 120 + PA<br>
+          Va = 113 × √(weight ÷ 2550)
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Computed values</div>
+        <div class="told-grid" id="told_out"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Estimated performance</div>
+      <div class="perf-note">⚠ Distances are approximations from standard PA-28-181 POH charts corrected for DA and weight. Verify against actual POH Section 5. Flaps 0° T/O, full flaps LDG.</div>
+      <div class="told-grid" id="perf_out" style="gap:8px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Wind component diagram</div>
+      <div class="canvas-wrap"><canvas id="windCanvas" style="width:100%;height:190px"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ══ METAR PANEL ══ -->
+  <div id="panel-metar" class="panel">
+    <div id="metar-cards-container">
+      <div style="color:var(--text2);font-size:13px;padding:20px;text-align:center">
+        Complete the startup setup to load METAR data.
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:8px">
+      <button onclick="openSetup()" style="padding:8px 18px;font-size:13px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:6px">
+        <i class="ti ti-settings"></i> Change airports / re-fetch
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// AIRCRAFT CONSTANTS
+// ═══════════════════════════════════════════════
+const EW=1555.93,EA=87.30,EM=135838.14,MAX_G=2550,MAX_U=994.07;
+const ENV=[
+  {w:1200,fwd:82.0,aft:93.0},
+  {w:2000,fwd:82.0,aft:93.0},
+  {w:2150,fwd:82.9,aft:93.4},
+  {w:2400,fwd:84.5,aft:94.5},
+  {w:2550,fwd:85.3,aft:95.0}
+];
+
+// ═══════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════
+let airports = {}; // { dep, dest, alt }
+let metarData = {}; // keyed by ICAO: { awc: {...}, mt: {...}, merged: {...} }
+
+// ═══════════════════════════════════════════════
+// MODAL / STARTUP
+// ═══════════════════════════════════════════════
+function openSetup() {
+  document.getElementById('modal-overlay').style.display='flex';
+}
+
+async function startPreflight() {
+  const dep  = document.getElementById('m_dep').value.trim().toUpperCase();
+  const dest = document.getElementById('m_dest').value.trim().toUpperCase();
+  const alt  = document.getElementById('m_alt').value.trim().toUpperCase();
+  if (!dep || !dest) {
+    setModalStatus('⚠ Please enter at least departure and destination.', true);
+    return;
+  }
+  airports = { dep, dest, alt: alt||null };
+  const btn = document.getElementById('modal-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Fetching METARs…';
+  setModalStatus('Querying aviationweather.gov and metar-taf.com…');
+  const icaos = [dep, dest, ...(alt ? [alt] : [])];
+  try {
+    await Promise.all(icaos.map(ic => fetchBothSources(ic)));
+    setModalStatus('✓ Done — loading app…');
+    setTimeout(() => {
+      document.getElementById('modal-overlay').style.display='none';
+      renderAirportBadges();
+      renderMetarCards();
+      refillTOLD();
+      computeWB();
+    }, 400);
+  } catch(e) {
+    setModalStatus('Error: '+e.message+' — continuing with available data.');
+    setTimeout(() => {
+      document.getElementById('modal-overlay').style.display='none';
+      renderAirportBadges();
+      renderMetarCards();
+      refillTOLD();
+      computeWB();
+    }, 800);
+  }
+  btn.disabled=false;
+  btn.innerHTML='<i class="ti ti-cloud-download"></i> Fetch METARs & Continue';
+}
+
+function setModalStatus(msg, warn=false) {
+  const el = document.getElementById('modal-status');
+  el.textContent = msg;
+  el.style.color = warn ? 'var(--warn-text)' : 'var(--text2)';
+}
+
+// ═══════════════════════════════════════════════
+// DUAL-SOURCE METAR FETCH
+// ═══════════════════════════════════════════════
+async function fetchBothSources(icao) {
+  metarData[icao] = { awc: null, mt: null, merged: null, crossCheck: null };
+  const [awc, mt] = await Promise.allSettled([
+    fetchAWC(icao),
+    fetchMT(icao)
+  ]);
+  const awcOk = awc.status==='fulfilled' && awc.value;
+  const mtOk  = mt.status==='fulfilled'  && mt.value;
+  metarData[icao].awc = awcOk ? awc.value : null;
+  metarData[icao].mt  = mtOk  ? mt.value  : null;
+  metarData[icao].merged = mergeMetar(metarData[icao].awc, metarData[icao].mt);
+  metarData[icao].crossCheck = crossCheck(metarData[icao].awc, metarData[icao].mt);
+}
+
+// ═══════════════════════════════════════════════
+// METAR — MANUAL INPUT + PARSER
+// ═══════════════════════════════════════════════
+
+function parseRawMetar(raw, source) {
+  if (!raw) return null;
+  raw = raw.trim().replace(/^METAR\s+/, '');
+  var windM  = raw.match(/(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT/);
+  var tempM  = raw.match(/\s(M?\d{2})\/( M?\d{2})\s/) || raw.match(/\b(M?\d{2})\/(M?\d{2})\b/);
+  var altM   = raw.match(/A(\d{4})/);
+  var visM   = raw.match(/(\d+(?:\/\d+)?)SM/);
+  var timeM  = raw.match(/(\d{6})Z/);
+  var clouds = [];
+  var cRx = /(FEW|SCT|BKN|OVC|SKC|CLR)(\d{3})?/g;
+  var cm;
+  while ((cm = cRx.exec(raw)) !== null)
+    clouds.push({ cover: cm[1], base: cm[2] ? parseInt(cm[2]) * 100 : null });
+  var wx = '';
+  var wxM = raw.match(/\s((?:[+-]?(?:RA|SN|TS|FG|BR|HZ|DZ|SH|GR|PL|SQ|FC|VA|SA|DU|PY|FU|IC|PO|SS|DS|UP))+)/);
+  if (wxM) wx = wxM[1].trim();
+  var pd = function(s) { return s && s.trim().startsWith('M') ? -parseInt(s.trim().slice(1)) : parseInt(s.trim()); };
+  return {
+    raw:    raw,
+    temp:   tempM ? pd(tempM[1]) : null,
+    dewp:   tempM ? pd(tempM[2]) : null,
+    wdir:   windM ? (windM[1] === 'VRB' ? null : parseInt(windM[1])) : null,
+    wspd:   windM ? parseInt(windM[2]) : null,
+    wgst:   windM && windM[3] ? parseInt(windM[3]) : null,
+    visib:  visM  ? visM[1] : null,
+    altim:  altM  ? parseInt(altM[1]) / 100 : null,
+    wx:     wx,
+    clouds: clouds,
+    time:   timeM ? timeM[1] + 'Z' : '',
+    source: source || 'manual'
+  };
+}
+
+function submitMetar(icao) {
+  var inputEl = document.getElementById('metar-input-' + icao);
+  if (!inputEl) return;
+  var raw = inputEl.value.trim().toUpperCase();
+  if (!raw || raw.length < 15) {
+    inputEl.style.borderColor = 'var(--danger-text)';
+    return;
+  }
+  inputEl.style.borderColor = '';
+  var parsed = parseRawMetar(raw, 'manual entry');
+  if (!parsed || parsed.altim === null) {
+    inputEl.style.borderColor = 'var(--danger-text)';
+    return;
+  }
+  if (!metarData[icao]) metarData[icao] = {};
+  metarData[icao].awc    = parsed;
+  metarData[icao].mt     = null;
+  metarData[icao].merged = parsed;
+  metarData[icao].crossCheck = { status: 'pending', msg: 'Single source — manual entry' };
+  renderMetarCards();
+  if (icao === airports.dep) refillTOLD();
+}
+
+function startPreflight() {
+  var dep  = document.getElementById('m_dep').value.trim().toUpperCase();
+  var dest = document.getElementById('m_dest').value.trim().toUpperCase();
+  var alt  = document.getElementById('m_alt').value.trim().toUpperCase();
+  if (!dep || !dest) {
+    setModalStatus('\u26a0 Enter departure and destination.', true);
+    return;
+  }
+  airports = { dep: dep, dest: dest, alt: alt || null };
+  // Pre-populate metarData slots
+  [dep, dest].concat(alt ? [alt] : []).forEach(function(ic) {
+    if (!metarData[ic]) metarData[ic] = { awc: null, mt: null, merged: null, crossCheck: null };
+  });
+  document.getElementById('modal-overlay').style.display = 'none';
+  renderAirportBadges();
+  renderMetarCards();
+  computeWB();
+}
+
+
+// ═══════════════════════════════════════════════
+// RENDER METAR CARDS
+// ═══════════════════════════════════════════════
+function renderMetarCards() {
+  var container = document.getElementById('metar-cards-container');
+  var icaos = [airports.dep, airports.dest].concat(airports.alt ? [airports.alt] : []).filter(Boolean);
+  if (!icaos.length) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:20px;text-align:center">Complete setup to enter METARs.</div>';
+    return;
+  }
+  container.innerHTML = icaos.map(function(ic){ return buildMetarCard(ic); }).join('');
+}
+
+function buildMetarCard(icao) {
+  var d = metarData[icao] || {};
+  var m = d.merged || null;
+  var awcOk = !!d.awc;
+  var label = (icao === airports.dep) ? 'Departure' : (icao === airports.dest) ? 'Destination' : 'Alternate';
+  var inputId = 'metar-input-' + icao;
+
+  // Build parsed data section
+  var dataHtml = '';
+  if (m) {
+    var altStr  = m.altim != null ? m.altim.toFixed(2) + ' inHg' : '\u2014';
+    var windDir = m.wdir  != null ? m.wdir + '\u00b0' : 'VRB';
+    var windSpd = m.wspd  != null ? m.wspd + ' kts' : '\u2014';
+    var windGst = m.wgst  ? (' G' + m.wgst + ' kts') : '';
+    var tempStr = (m.temp != null ? m.temp : '\u2014') + '\u00b0C / ' + (m.dewp != null ? m.dewp : '\u2014') + '\u00b0C';
+    var visStr  = m.visib != null ? m.visib + ' SM' : '\u2014';
+    var skyArr  = m.clouds && m.clouds.length ? m.clouds.map(function(c){ return c.cover + (c.base ? ' @' + c.base.toLocaleString() + 'ft' : ''); }) : ['Clear'];
+    var wxStr   = m.wx || '\u2014';
+    dataHtml = '<div class="metar-grid" style="margin:10px 0">'
+      + '<div class="metar-cell"><div class="mc-label">Altimeter</div><div class="mc-val">' + altStr + '</div></div>'
+      + '<div class="metar-cell"><div class="mc-label">Wind</div><div class="mc-val">' + windDir + ' @ ' + windSpd + windGst + '</div></div>'
+      + '<div class="metar-cell"><div class="mc-label">Temp / Dew</div><div class="mc-val">' + tempStr + '</div></div>'
+      + '<div class="metar-cell"><div class="mc-label">Visibility</div><div class="mc-val">' + visStr + '</div></div>'
+      + '<div class="metar-cell" style="grid-column:1/-1"><div class="mc-label">Sky / Wx</div><div class="mc-val" style="font-size:13px">' + skyArr.join(', ') + (m.wx ? ' \u00b7 ' + m.wx : '') + '</div></div>'
+      + '</div>'
+      + '<div class="metar-raw">' + m.raw + '</div>';
+  } else {
+    dataHtml = '<div style="color:var(--text3);font-size:13px;padding:6px 0 10px">No METAR entered yet.</div>';
+  }
+
+  // Source chip
+  var chip = m
+    ? '<span class="chip ok"><i class="ti ti-check"></i> ' + (m.source || 'manual') + '</span>'
+    : '<span class="chip"><i class="ti ti-pencil"></i> awaiting input</span>';
+
+  return '<div class="metar-airport-card">'
+    + '<div class="metar-header"><span class="metar-icao">' + icao + '</span><span class="metar-name" style="margin-left:6px;font-size:13px;color:var(--text2)">' + label + '</span><span class="metar-time" style="margin-left:auto">' + (m && m.time ? 'Obs: ' + m.time : '') + '</span></div>'
+    + '<div class="source-chips" style="margin-bottom:8px">' + chip + '</div>'
+    + dataHtml
+    + '<div style="margin-top:12px">'
+    + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:5px">' + (m ? 'Update METAR' : 'Paste METAR string') + '</div>'
+    + '<div style="font-size:11px;color:var(--text3);margin-bottom:6px">Format: METAR KXXX DDHHMM Z ... or KXXX DDHHMMZ ...</div>'
+    + '<textarea id="' + inputId + '" rows="2" placeholder="METAR ' + icao + ' 180055Z 14006KT 10SM BKN033 30/24 A2963 RMK AO2" style="width:100%;font-family:monospace;font-size:12px;padding:7px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);resize:vertical;line-height:1.5"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:6px;align-items:center">'
+    + '<button data-icao="' + icao + '" onclick="submitMetar(this.dataset.icao)" style="padding:6px 18px;font-size:13px;font-weight:500;border-radius:var(--radius);border:none;background:#185fa5;color:#fff;cursor:pointer"><i class="ti ti-check"></i> Apply METAR</button>'
+    + (m ? '<button data-icao="' + icao + '" onclick="clearMetar(this.dataset.icao)" style="padding:6px 12px;font-size:13px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer">Clear</button>' : '')
+    + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+async function refreshAirport(icao) {
+  await fetchBothSources(icao);
+  renderMetarCards();
+  refillTOLD();
+}
+
+// ═══════════════════════════════════════════════
+// AUTO-FILL TOLD FROM DEPARTURE METAR
+// ═══════════════════════════════════════════════
+function refillTOLD() {
+  const dep = airports.dep;
+  if (!dep || !metarData[dep]?.merged) return;
+  const m = metarData[dep].merged;
+  const fields = [];
+  if (m.altim != null) { setField('t_alt', m.altim.toFixed(2)); fields.push('altimeter'); }
+  if (m.temp  != null) { setField('t_oat', m.temp); fields.push('OAT'); }
+  if (m.wdir  != null) { setField('t_wdir', m.wdir); fields.push('wind dir'); }
+  if (m.wspd  != null) { setField('t_wspd', m.wspd); fields.push('wind speed'); }
+  if (fields.length) {
+    const banner = document.getElementById('told-autofill-banner');
+    banner.style.display = 'flex';
+    document.getElementById('told-autofill-text').textContent =
+      `Auto-filled from " + dep + " METAR: " + fields.join(", ") + "`;
+  }
+  computeTOLD();
+}
+
+function setField(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = val;
+  el.classList.add('autofilled');
+  setTimeout(()=>el.classList.remove('autofilled'), 2500);
+}
+
+// ═══════════════════════════════════════════════
+// AIRPORT BADGES IN TOPBAR
+// ═══════════════════════════════════════════════
+function renderAirportBadges() {
+  const c = document.getElementById('airport-badges');
+  const list = [
+    airports.dep  ? {ic:airports.dep,  label:'DEP'} : null,
+    airports.dest ? {ic:airports.dest, label:'DEST'} : null,
+    airports.alt  ? {ic:airports.alt,  label:'ALT'} : null,
+  ].filter(Boolean);
+  c.innerHTML = list.map(a=>`<span class="ap-badge" onclick="showTab('metar')"><i class="ti ti-cloud-check"></i> ${a.label}: ${a.ic}</span>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// W&B CALCULATIONS
+// ═══════════════════════════════════════════════
+function cgLimits(w) {
+  if(w<=ENV[0].w)return{fwd:ENV[0].fwd,aft:ENV[0].aft};
+  if(w>=ENV[ENV.length-1].w)return{fwd:ENV[ENV.length-1].fwd,aft:ENV[ENV.length-1].aft};
+  for(let i=0;i<ENV.length-1;i++){
+    if(w>=ENV[i].w&&w<=ENV[i+1].w){
+      const t=(w-ENV[i].w)/(ENV[i+1].w-ENV[i].w);
+      return{fwd:ENV[i].fwd+(ENV[i+1].fwd-ENV[i].fwd)*t,aft:ENV[i].aft+(ENV[i+1].aft-ENV[i].aft)*t};
+    }
+  }
+  return{fwd:85.3,aft:95.0};
+}
+
+function getWB() {
+  return {
+    pilot:  +document.getElementById('pilot').value||0,
+    copilot:+document.getElementById('copilot').value||0,
+    rear_l: +document.getElementById('rear_l').value||0,
+    rear_r: +document.getElementById('rear_r').value||0,
+    bags:   +document.getElementById('bags').value||0,
+    fuel:   +document.getElementById('fuel_s').value||0,
+  };
+}
+
+function computeWB() {
+  const v=getWB(), fw=v.fuel*6;
+  document.getElementById('fuel_disp').textContent=v.fuel+' gal';
+  document.getElementById('fuel_lbs').textContent=fw+' lbs';
+  const rows=[
+    {l:'Empty aircraft',w:EW,a:EA,m:EM},
+    {l:'Pilot (front L)',w:v.pilot,a:80.5,m:v.pilot*80.5},
+    {l:'Front right seat',w:v.copilot,a:80.5,m:v.copilot*80.5},
+    {l:'Rear left',w:v.rear_l,a:118.1,m:v.rear_l*118.1},
+    {l:'Rear right',w:v.rear_r,a:118.1,m:v.rear_r*118.1},
+    {l:'Baggage',w:v.bags,a:142.8,m:v.bags*142.8},
+    {l:'Fuel (100LL)',w:fw,a:95.0,m:fw*95.0},
+  ];
+  let tw=EW,tm=EM;
+  rows.slice(1).forEach(r=>{tw+=r.w;tm+=r.m;});
+  const cg=tw>0?tm/tw:0, ul=tw-EW;
+  document.getElementById('mtable').innerHTML=
+    rows.map(r=>`<tr><td>${r.l}</td><td>${r.w.toFixed(1)}</td><td>${r.a.toFixed(1)}"</td><td>${r.m.toFixed(0)}</td></tr>`).join('')+
+    `<tr class="tfoot"><td>TOTAL</td><td>${tw.toFixed(1)}</td><td>${cg.toFixed(2)}"</td><td>${tm.toFixed(0)}</td></tr>`;
+  document.getElementById('r_gw').textContent=tw.toFixed(0)+' lbs';
+  document.getElementById('r_cg').textContent=cg.toFixed(2)+'"';
+  document.getElementById('r_ul').textContent=ul.toFixed(0)+' lbs';
+  const lim=cgLimits(tw),ow=tw>MAX_G,cgok=cg>=lim.fwd&&cg<=lim.aft,bgok=v.bags<=200;
+  const bar=document.getElementById('sbar'),txt=document.getElementById('stext'),ic=bar.querySelector('i');
+  bar.className='sbar';
+  if(ow){bar.classList.add('danger');txt.textContent=`Over max gross by ${(tw-MAX_G).toFixed(0)} lbs!`;ic.className='ti ti-alert-circle';}
+  else if(!cgok){bar.classList.add('danger');txt.textContent=`CG out of limits! ${cg.toFixed(2)}" — limits ${lim.fwd.toFixed(1)}"–${lim.aft.toFixed(1)}"`;ic.className='ti ti-alert-circle';}
+  else if(!bgok){bar.classList.add('warn');txt.textContent='Baggage exceeds 200 lb limit';ic.className='ti ti-alert-triangle';}
+  else if(ul>MAX_U*0.92){bar.classList.add('warn');txt.textContent=`Near max useful load (${ul.toFixed(0)} / ${MAX_U} lbs) — CG ${cg.toFixed(2)}" OK`;ic.className='ti ti-alert-triangle';}
+  else{bar.classList.add('ok');txt.textContent=`Within limits — CG ${cg.toFixed(2)}" (fwd ${lim.fwd.toFixed(1)}" / aft ${lim.aft.toFixed(1)}")`;ic.className='ti ti-check-circle';}
+  drawCG(tw,cg);
+}
+
+function drawCG(gw,cg) {
+  const el=document.getElementById('cgCanvas');
+  el.width=el.offsetWidth||700;el.height=220;
+  const ctx=el.getContext('2d');ctx.clearRect(0,0,el.width,el.height);
+  const p={l:54,r:16,t:16,b:40},W=el.width-p.l-p.r,H=el.height-p.t-p.b;
+  const minC=80,maxC=97,minW=1200,maxW=2700;
+  const tx=c=>(c-minC)/(maxC-minC)*W+p.l;
+  const ty=w=>H-(w-minW)/(maxW-minW)*H+p.t;
+  const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const tc=dk?'#888':'#999',gc=dk?'#2a2a2a':'#f0f0f0';
+  ctx.strokeStyle=gc;ctx.lineWidth=0.5;
+  for(let x=82;x<=96;x+=2){const px=tx(x);ctx.beginPath();ctx.moveTo(px,p.t);ctx.lineTo(px,p.t+H);ctx.stroke();}
+  for(let w=1400;w<=2600;w+=200){const py=ty(w);ctx.beginPath();ctx.moveTo(p.l,py);ctx.lineTo(p.l+W,py);ctx.stroke();}
+  ctx.fillStyle=tc;ctx.font='11px system-ui,sans-serif';ctx.textAlign='center';
+  for(let x=82;x<=96;x+=2)ctx.fillText(x,tx(x),p.t+H+14);
+  ctx.fillText('CG — inches aft of datum',p.l+W/2,p.t+H+30);
+  ctx.textAlign='right';
+  for(let w=1400;w<=2600;w+=200)ctx.fillText(w,p.l-4,ty(w)+4);
+  ctx.save();ctx.translate(13,p.t+H/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillStyle=tc;ctx.fillText('Gross weight (lbs)',0,0);ctx.restore();
+  const ef=dk?'rgba(30,180,100,.15)':'rgba(30,180,100,.1)',es=dk?'#2db87a':'#1d9e75';
+  ctx.beginPath();ctx.moveTo(tx(ENV[0].fwd),ty(ENV[0].w));
+  ENV.forEach(pt=>ctx.lineTo(tx(pt.fwd),ty(pt.w)));
+  [...ENV].reverse().forEach(pt=>ctx.lineTo(tx(pt.aft),ty(pt.w)));
+  ctx.closePath();ctx.fillStyle=ef;ctx.fill();ctx.strokeStyle=es;ctx.lineWidth=1.5;ctx.stroke();
+  const lim=cgLimits(gw),ok=gw<=MAX_G&&cg>=lim.fwd&&cg<=lim.aft;
+  const px2=tx(cg),py2=ty(gw);
+  ctx.strokeStyle=dk?'rgba(30,180,100,.35)':'rgba(30,180,100,.25)';ctx.lineWidth=0.5;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(p.l,py2);ctx.lineTo(px2,py2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px2,p.t+H);ctx.lineTo(px2,py2);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(px2,py2,7,0,Math.PI*2);
+  ctx.fillStyle=ok?'#1d9e75':'#e24b4a';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=ok?'#1d9e75':'#e24b4a';ctx.font='bold 12px system-ui,sans-serif';ctx.textAlign='left';
+  const lab=`${cg.toFixed(2)}", ${gw.toFixed(0)} lbs`;
+  const lx=px2+12>p.l+W-110?px2-100:px2+12;
+  ctx.fillText(lab,lx,py2+4);
+}
+
+// ═══════════════════════════════════════════════
+// TOLD CALCULATIONS
+// ═══════════════════════════════════════════════
+function stdTemp(elev){return 15-2*(elev/1000);}
+
+function computeTOLD() {
+  const elev=+document.getElementById('t_elev').value||0;
+  const baro=+document.getElementById('t_alt').value||29.92;
+  const oat=+document.getElementById('t_oat').value||20;
+  const wdir=+document.getElementById('t_wdir').value||0;
+  const wspd=+document.getElementById('t_wspd').value||0;
+  const rwhdg=+document.getElementById('t_rwhdg').value||360;
+  const pa=((29.92-baro)*1000)+elev;
+  const std=stdTemp(elev);
+  const da=(oat-std)*120+pa;
+  const v=getWB(), fw=v.fuel*6;
+  const tw=EW+v.pilot+v.copilot+v.rear_l+v.rear_r+v.bags+fw;
+  const va_adj=113*Math.sqrt(tw/MAX_G);
+  const daFactor=1+(da/1000)*0.10, wtFactor=tw/MAX_G;
+  const toGR=Math.round(800*daFactor*wtFactor);
+  const to50=Math.round(1450*daFactor*wtFactor);
+  const ldGR=Math.round(600*daFactor*wtFactor);
+  const ld50=Math.round(1150*daFactor*wtFactor);
+  const angle=(rwhdg-wdir)*Math.PI/180;
+  const hw=Math.round(wspd*Math.cos(angle)*10)/10;
+  const xw=Math.round(Math.abs(wspd*Math.sin(angle))*10)/10;
+  document.getElementById('told_out').innerHTML=[
+    {l:'Pressure altitude', v:Math.round(pa)+' ft', s:''},
+    {l:'Density altitude',  v:Math.round(da)+' ft', s:'ISA '+(oat>std?'+':'')+(oat-std).toFixed(0)+'°C'},
+    {l:'Va at T/O weight',  v:Math.round(va_adj)+' KIAS', s:'gross Va = 113 KIAS'},
+    {l:'Gross weight',      v:Math.round(tw)+' lbs', s:'max 2,550 lbs'},
+    {l:'Headwind component',v:(hw<0?'':'+')+hw+(hw<0?' kts (tailwind)':' kts'), s:''},
+    {l:'Crosswind component',v:xw+' kts', s:'max demonstrated 17 kts'},
+  ].map(x=>`<div class="told-out"><div class="tl">${x.l}</div><div class="tv">${x.v}</div><div class="ts">${x.s}</div></div>`).join('');
+  document.getElementById('perf_out').innerHTML=[
+    {l:'T/O ground roll (flaps 0°)',      v:toGR+' ft', s:'+50% margin: '+Math.round(toGR*1.5)+' ft'},
+    {l:"T/O over 50' obstacle",           v:to50+' ft', s:'+50% margin: '+Math.round(to50*1.5)+' ft'},
+    {l:'Landing roll (full flaps)',        v:ldGR+' ft', s:'+50% margin: '+Math.round(ldGR*1.5)+' ft'},
+    {l:"Landing over 50' obstacle",       v:ld50+' ft', s:'+50% margin: '+Math.round(ld50*1.5)+' ft'},
+  ].map(x=>`<div class="told-out"><div class="tl">${x.l}</div><div class="tv">${x.v}</div><div class="ts">${x.s}</div></div>`).join('');
+  drawWind(wdir,wspd,rwhdg,hw,xw);
+}
+
+function drawWind(wdir,wspd,rwhdg,hw,xw) {
+  const el=document.getElementById('windCanvas');
+  el.width=el.offsetWidth||700;el.height=190;
+  const ctx=el.getContext('2d');ctx.clearRect(0,0,el.width,el.height);
+  const cx=el.width/2,cy=82,r=68;
+  const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const tc=dk?'#777':'#999',bc=dk?'#2d2d2d':'#ebebeb';
+  ctx.strokeStyle=bc;ctx.lineWidth=0.5;
+  [0.33,0.66,1].forEach(f=>{ctx.beginPath();ctx.arc(cx,cy,r*f,0,Math.PI*2);ctx.stroke();});
+  ['N','E','S','W'].forEach((d,i)=>{
+    const a=i*Math.PI/2-Math.PI/2;
+    ctx.fillStyle=tc;ctx.font='11px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(d,cx+Math.cos(a)*(r+14),cy+Math.sin(a)*(r+14));
+  });
+  const ra=(rwhdg-90)*Math.PI/180;
+  ctx.strokeStyle=dk?'#4a90d9':'#185fa5';ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(cx+Math.cos(ra)*r*0.88,cy+Math.sin(ra)*r*0.88);
+  ctx.lineTo(cx-Math.cos(ra)*r*0.88,cy-Math.sin(ra)*r*0.88);ctx.stroke();
+  ctx.fillStyle=dk?'#4a90d9':'#185fa5';ctx.font='11px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('RW '+rwhdg+'°',cx+Math.cos(ra)*(r+14),cy+Math.sin(ra)*(r+14));
+  if(wspd>0){
+    const wa=(wdir-90)*Math.PI/180;
+    const scale=Math.min(wspd/60,1)*r*0.82;
+    const ex=cx+Math.cos(wa)*scale,ey=cy+Math.sin(wa)*scale;
+    ctx.strokeStyle='#e24b4a';ctx.lineWidth=2;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ex,ey);ctx.stroke();
+    const a1=wa+Math.PI+0.35,a2=wa+Math.PI-0.35;
+    ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex+Math.cos(a1)*11,ey+Math.sin(a1)*11);
+    ctx.moveTo(ex,ey);ctx.lineTo(ex+Math.cos(a2)*11,ey+Math.sin(a2)*11);ctx.stroke();
+  }
+  ctx.fillStyle=dk?'#bbb':'#444';ctx.font='12px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText(`HW: ${hw>=0?'+':''}${hw} kts  |  XW: ${xw} kts  |  Wind: ${wdir}° @ ${wspd} kts`,cx,cy+r+12);
+}
+
+// ═══════════════════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════════════════
+function showTab(t) {
+  document.querySelectorAll('.tab').forEach((b,i)=>{b.classList.toggle('active',['wb','told','metar'][i]===t);});
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='told') computeTOLD();
+  if(t==='wb')   computeWB();
+}
+
+// ═══════════════════════════════════════════════
+// EVENT LISTENERS
+// ═══════════════════════════════════════════════
+['pilot','copilot','rear_l','rear_r','bags'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', computeWB);
+});
+document.getElementById('fuel_s').addEventListener('input', computeWB);
+['t_elev','t_alt','t_oat','t_wdir','t_wspd','t_rwhdg'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', computeTOLD);
+});
+['m_dep','m_dest','m_alt'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') startPreflight(); });
+});
+window.addEventListener('resize', ()=>{ computeWB(); computeTOLD(); });
+
+function applyManualMetar(icao) {
+  var input = document.getElementById('manual-metar-' + icao);
+  if (!input) return;
+  var raw = input.value.trim().toUpperCase();
+  if (!raw || raw.length < 15) return;
+  var parsed = parseRawMetar(raw, 'manual entry');
+  if (!parsed) return;
+  metarData[icao] = metarData[icao] || {};
+  metarData[icao].awc = parsed;
+  metarData[icao].mt  = null;
+  metarData[icao].merged = parsed;
+  metarData[icao].crossCheck = { status: 'pending', msg: 'Manual entry — no cross-check' };
+  renderMetarCards();
+  if (icao === airports.dep) refillTOLD();
+}
+
+function clearMetar(icao) {
+  metarData[icao] = { awc: null, mt: null, merged: null, crossCheck: null };
+  renderMetarCards();
+  computeTOLD();
+}
+
+// Init
+computeWB();
+document.getElementById('m_dep').focus();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { console.log('SW failed:', err); });
+  });
+}
+</script>
+</body>
+</html>
