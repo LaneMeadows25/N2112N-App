@@ -1,0 +1,14 @@
+{
+  "name": "N2112N Preflight",
+  "short_name": "N2112N",
+  "description": "Weight & Balance, TOLD Card, and METAR tool for Piper PA-28-181 N2112N",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eeece8",
+  "theme_color": "#185fa5",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
